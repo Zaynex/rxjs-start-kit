@@ -1,0 +1,5 @@
+node_modules
+lib
+chunks
+.awcache
+dist
