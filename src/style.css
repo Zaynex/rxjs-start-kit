@@ -1,0 +1,10 @@
+.demo {
+    padding:10px 20px;
+    background: antiquewhite;
+    margin: 10px;
+}
+
+.main {
+    display: flex;
+    flex-wrap: wrap;
+}

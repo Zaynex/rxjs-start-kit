@@ -7,7 +7,7 @@
       "class-name": true,
       "indent": [true, "spaces"],
       "max-line-length": [true, 150],
-      "no-consecutive-blank-lines": true,
+      "no-consecutive-blank-lines": false,
       "no-trailing-whitespace": true,
       "no-duplicate-variable": true,
       "no-console": [true, "trace"],
@@ -30,7 +30,7 @@
       "quotemark": [true,
         "single",
         "avoid-escape"],
-      "semicolon": [true, "never"], /* 逗号*/
+      "semicolon": [true, "never"],
       "ter-prefer-arrow-callback": true,
       "typedef-whitespace": [true, {
         "call-signature": "nospace",
@@ -46,6 +46,6 @@
       "check-operator",
       "check-separator",
       "check-type"],
-    "comment-format": [true, "check-space", "check-lowercase"]
+    "comment-format": [true, "check-space"]
   }
 }
