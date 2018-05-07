@@ -1,5 +1,6 @@
-import { Observable, Observer, Subject, Subscription, BehaviorSubject, ReplaySubject, AsyncSubject } from 'rxjs'
+import { Observable, Observer, Subject, Subscription, BehaviorSubject, ReplaySubject, AsyncSubject, ObjectUnsubscribedError } from 'rxjs'
 import { subscribeOn } from 'rxjs/operator/subscribeOn'
+import { debounce } from 'rxjs/operators'
 
 const renderUI = (data: any): void => {
   const span = document.createElement('span')
@@ -7,9 +8,10 @@ const renderUI = (data: any): void => {
   span.innerHTML = `${data}`
   document.querySelector('.main').appendChild(span)
 }
+const input = <HTMLInputElement>document.querySelector('#auto-complete')
 const button = <HTMLButtonElement>document.querySelector('button')
-Observable.fromEvent(button, 'click')
-  .subscribe(() => renderUI('clicked'))
+// Observable.fromEvent(button, 'click')
+//   .subscribe(() => renderUI('clicked'))
 
 // observable.fromEvent(button, 'click')
 //   .throttleTime(1000)
@@ -192,3 +194,163 @@ Observable.fromEvent(button, 'click')
 // const bmi = Observable.combineLatest(weight, height, (w, h) => w / (h * h))
 
 // bmi.subscribe(x => renderUI(`bmi is ${x}`))
+
+// const stream$ = Observable.of(1, 2, 3, 4, 5)
+//   .do(value => {
+//     console.log(value + 1)
+//   })
+//   .filter(value => value % 2 === 0)
+// stream$.subscribe(value => renderUI(`${value}`))
+
+
+
+// const person$ = Observable.ajax({
+//   url: 'https://swapi.co/api/people/1/',
+//   crossDomain: true,
+//   createXHR: function() {
+//     return new XMLHttpRequest()
+//   }
+// }).map(e => e.response)
+
+
+// const subscriptionPerson = person$.subscribe(res => {
+//   renderUI(res.name)
+// })
+
+
+// const fetchSubscription = Observable.from(fetch('https://swapi.co/api/people/1/'))
+//   .flatMap(res => Observable.from(res.json()))
+//   .subscribe(fetchRes => renderUI(fetchRes.name))
+
+
+// 并发操作
+// const merged$ = Observable.merge(
+//   Observable.of(1).delay(5000),
+//   Observable.of(3, 2, 5)
+// )
+
+const observer = {
+  next: (data: any) => renderUI(data)
+}
+
+// merged$.subscribe(observer)
+
+
+// 以 observable 中的数量来取第几个值，比如 Observable 里面最短长度是 1 那就取第一个值  1  3 7
+// const stream$ = Observable.zip(
+//   Observable.of(1, 10),
+//   Observable.of(2, 3, 4),
+//   Observable.of(7)
+// )
+
+// 这里面最短数量是2 那就取第二个值   10  3  10
+// const stream$ = Observable.zip(
+//   Observable.of(1, 10),
+//   Observable.of(2, 3, 4),
+//   Observable.of(7, 10, 100)
+// )
+
+// 数量为3，取最后一个值
+// const stream$ = Observable.zip(
+//   Observable.of(1, 10, 100),
+//   Observable.of(2, 3, 4),
+//   Observable.of(7, 10, 100)
+// )
+
+// stream$.subscribe(observer)
+
+
+// const stream$ = Observable.of(1, 2, 3, 4)
+//   .reduce((acc, curr) => acc + curr, 0)
+
+
+// 用 Object.assign 和 reduce 做 average
+// const stream$ = Observable.of(3, 6, 9)
+//   .map(x => { return { sum : x, counter: 1 }})
+//   .reduce((acc, curr) => {
+//     return Object.assign({}, acc, { sum: acc.sum + curr.sum, counter: acc.counter + curr.counter })
+//   })
+//   .do(console.log)
+//   .map(x => x.sum / x.counter)
+
+// stream$.subscribe(renderUI)
+
+
+
+// const threeStream$ = Observable.interval(1000).take(3)
+// threeStream$.subscribe(renderUI)
+
+
+
+// sampleTime 也是2s内的最后一秒发出的
+// const start = new Date()
+
+// const button$ = Observable
+//   .fromEvent(button, 'click')
+//   .sampleTime(2000)
+
+// button$.subscribe(val => {
+//   console.log(val, new Date() - start)
+// })
+
+
+
+
+// 判断用户点击了几次， 然后通过 filer 操作符就可以取得具体的 observable 了
+// const click$ = Observable.fromEvent(button, 'click')
+
+// const scissor$ = Observable.interval(400)
+// click$.buffer(scissor$)
+//   // .filter(value => value.length > 2)
+//   .subscribe(value => {
+//     if (value.length === 1) {
+//       renderUI('single click')
+//     } else if (value.length === 2) {
+//       renderUI('double click')
+//     } else if (value.length === 3) {
+//       renderUI('tripple click')
+//     } else if (value.length === 4) {
+//       renderUI('4 click')
+//     }
+//   })
+
+
+// const input$ = Observable.fromEvent(input, 'keyup')
+// const debounceBreak$ = input$.debounceTime(300)
+
+// const stream$ = input$
+//   .map((ev: any) => ev.key)
+//   .buffer(debounceBreak$)
+//   .switchMap((allKeyes) => {
+//     console.log(`everyThing that happened during 2 sec`, allKeyes)
+//     return Observable.of(`ajax based on` + input.value)
+//   })
+// stream$.subscribe(data => console.log('values', data))
+
+
+// 以 1s 为时间片段持续记录所发生的 key 值
+// const bufferTime$ = Observable.fromEvent(input, 'keyup')
+//   .map( (ev: any) => ev.key)
+//   .bufferTime(1000)
+//   .take(3)
+//   .groupBy(value => value)
+
+// bufferTime$.subscribe(data => console.log(data))
+
+/**
+ * 如果你想要记录该网站上的其它用户正在做什么，
+ * 并希望重播他们曾经做过的所有交互，或者当他们开始输入，
+ * 你希望通过 socket 发送此信息的话，那么上面的示例会非常有用。
+ * 最后一个是当下的标准功能，
+ * 你看见一个人在另一个终端上打字。所以确实有这样的业务案例。
+ */
+
+
+const stream$ = Observable.of(1, 2, 3)
+.map(value => {
+   if (value > 2) { throw 'error' }
+})
+.retry(5)
+
+
+stream$.subscribe(data => console.log(data), err => console.log(err))
