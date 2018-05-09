@@ -1,6 +1,10 @@
 import { Observable, Observer, Subject, Subscription, BehaviorSubject, ReplaySubject, AsyncSubject, ObjectUnsubscribedError } from 'rxjs'
 import { subscribeOn } from 'rxjs/operator/subscribeOn'
-import { debounce } from 'rxjs/operators'
+import { debounce, delay, take, catchError } from 'rxjs/operators'
+import { forkJoin } from 'rxjs/observable/forkJoin'
+import { interval } from 'rxjs/observable/interval'
+import { of } from 'rxjs/observable/of'
+import { _throw } from 'rxjs/observable/throw'
 
 const renderUI = (data: any): void => {
   const span = document.createElement('span')
@@ -346,11 +350,129 @@ const observer = {
  */
 
 
-const stream$ = Observable.of(1, 2, 3)
-.map(value => {
-   if (value > 2) { throw 'error' }
-})
-.retry(5)
+// const stream$ = Observable.of(1, 2, 3)
+// .map(value => {
+//    if (value > 2) { throw 'error' }
+// })
+// .retry(5)
 
 
-stream$.subscribe(data => console.log(data), err => console.log(err))
+// stream$.subscribe(data => console.log(data), err => console.log(err))
+
+/**
+ * login()
+     .then(getUserDetails)
+     .then(getOrdersByUser)
+ */
+// switchMap 流  依赖方式，可以把 of 当做 ajax 调用
+
+// const stream$ = Observable.of({ message: 'Logged in' })
+//   .switchMap( () => {
+//     return Observable.of({ id: 1, name: 'user' })
+//   })
+//   .switchMap(() => {
+//     return Observable.from([{ id: 114, userId: 1 }, { id: 117, userId: 1 }])
+//   })
+
+// stream$.subscribe(orders => {
+//   renderUI(orders)
+//   console.log('orders', orders)
+// })
+
+
+
+/**
+ * getUser()
+   .then((user) => {
+      return Promise.all(
+        getOrders(),
+        getMessages()
+      )
+   })
+ */
+
+
+
+/** forkJoin 好像失效了 */
+// const stream$ = Observable.of({ id: 1, name: 'user' })
+// stream$.switchMap(() => {
+//   return Observable.forkJoin(
+//     Observable.from([{ id: 111, user: 111 }, { id : 115, user: 1 }]),
+//     Observable.from([{ id: 112, user: 121 }, { id : 115, user: 1 }]),
+//   )
+// })
+
+// stream$.subscribe(result => {
+//   console.log(result)
+//   console.log(`orders`, result[0])
+//   console.log('messages', result[1])
+// })
+
+// forkJoin promise.all 返回的是最新值
+const myPromise = (val: any) =>
+   new Promise(resolve => {
+     setTimeout(() => resolve(`Promise resolved: ${val}`), 5000)
+   })
+
+// 如果有报错，就取消所有请求
+// const example = forkJoin(
+//   of('hello'),
+//   of('hello').pipe(delay(10000)),
+//   interval(1000).pipe(take(1)),
+//   interval(1000).pipe(take(2)),
+//   myPromise('RESULT'),
+//   _throw('This will Error')
+// ).pipe(catchError(error => of(error)))
+
+// 如果有报错，成功的请求依然有值返回
+// 以上都定义的是 错误的范围
+// const example = forkJoin(
+//   of('hello'),
+//   of('hello').pipe(delay(10000)),
+//   interval(1000).pipe(take(1)),
+//   interval(1000).pipe(take(2)),
+//   myPromise('RESULT'),
+//   _throw('This will Error').pipe(catchError(err => of(err)))
+// )
+// example.subscribe(data => console.log(data))
+
+
+// Subject 可以作为代理，即从另外一个流中接收值,此时Subject 的订阅者就是监听另外一个流
+// 类似于一个总线，最终都会聚到一个 流中
+// const stream$ = Observable.interval(500).take(3)
+// const proxySubject = new Subject()
+// const subscriber = stream$.subscribe(proxySubject)
+
+// proxySubject.subscribe(value => console.log('proxy value' + value))
+// proxySubject.next(10)
+
+
+
+
+// 正常情况下 在 subscribe 之前的流都是不会被订阅到的
+// 但是 replay 让流拥有了缓存的机会。
+// const replaySubject = new Subject()
+// const replaySubject = new ReplaySubject( 2 )
+
+// replaySubject.next( 0 )
+// replaySubject.next( 1 )
+// replaySubject.next( 2 )
+
+// //  1, 2
+// const replaySubscription = replaySubject.subscribe((value) => {
+//     console.log('replay subscription', value)
+// })
+
+
+// AsyncSubject 除非执行 complete 否则不会触发
+const asyncSubject = new AsyncSubject()
+asyncSubject.subscribe(
+    (value) => console.log('async subject', value),
+    (error) => console.error('async error', error),
+    () => console.log('async completed')
+)
+
+asyncSubject.next( 1 )
+asyncSubject.next( 2 )
+asyncSubject.error('err')
+asyncSubject.complete()
